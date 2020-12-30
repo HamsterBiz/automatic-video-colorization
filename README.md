@@ -1,65 +1,94 @@
 
-This is a Tensorflow implementation for the paper 'Fully Automatic Video Colorization with Self-Regularization and Diversity'.
+This is a Tensorflow implementation for the CVPR 2019 paper 'Fully Automatic Video Colorization with Self-Regularization and Diversity'.
 
 
 ![alt text](https://github.com/ChenyangLEI/Fully-Automatic-Video-Colorization-with-Self-Regularization-and-Diversity/blob/master/Teaser.PNG)
 
 More results are shown on our project website https://leichenyang.weebly.com/project-color.html
 
-## Our results on DAVIS and Videvo
-If you need to compare with our results, please download the following dataset.
-https://drive.google.com/open?id=1XLfChKJiOnYuSx_g8xaAKeKixOhxbShz
+## News
+We propose a novel and general framework [Deep-Video-Prior](https://chenyanglei.github.io/DVP/index.html) 
+that can address the temporal inconsistency problem given an input video and a processed video.
+We can obtain high-quality video using a single-image colorization method and our novel framework.
+ 
+
 
 ## Quick inference( without refinement network) 
-For convenience, we also provide the version without the refinement network.
-It's easier to use.
+```
+conda env create -f environment.yml
+conda activate automatic-video-colorization
+bash pretrained_models/download_models.sh
+python test.py 
+```
+the results are saved in test_result/
 
-(1) You don't need to generate optical flow by PWC-Net for refinement. 
+## Dependency
+### Environment
+This code is based on tensorflow. It has been tested on Ubuntu 18.04 LTS.
 
-(2) Less libraries are required.
+Anaconda is recommended: [Ubuntu 18.04](https://www.digitalocean.com/community/tutorials/how-to-install-the-anaconda-python-distribution-on-ubuntu-18-04)
+| [Ubuntu 16.04](https://www.digitalocean.com/community/tutorials/how-to-install-the-anaconda-python-distribution-on-ubuntu-16-04)
 
-(3) It could also be used for single image colorization. 
-
-First, download the ckpt. 
+After installing Anaconda, you can setup the environment simply by
 
 ```
-python download_models.py
-unzip ckpt_woflow.zip
+conda env create -f environment.yml
+conda activate automatic-video-colorization
 ```
 
-For video colorization, the video should be split to frames first, i.e., transfer video format (.mp4/.avi) to image format (.jpg/.png)
+### Pretrained-models and VGG-Models
 ```
-python main_woflow.py --model ckpt_woflow --use_gpu 1 --test_dir /PATH/TO/TEST/DIR
-
-e.g.
-python main_woflow.py --model ckpt_woflow --use_gpu 1 --test_dir test_sample0
+bash download_pretrained.sh
 ```
 
-For single image colorization
+
+## Usage
+### Image colorization
+We provide the ckpt to colorize a single image, the temporal consistency is not as good as video colorization but the colorization performance is better.
+
+You can colorization a single image, e.g.:
 ```
-python main_woflow.py --model ckpt_woflow --use_gpu 1 --test_img /PATH/TO/TEST_IMG
-
-e.g.
-python main_woflow.py --model ckpt_woflow --use_gpu 1 --test_img test_sample0/frame_000980.jpg 
-```
-
-Results are saved in ./ckpt_woflow/ folder.
-
-## Requirement
-Required python libraries:
-
-```
-tensorflow 1.2.0
-OpenCV 3.4.2.16
+python test.py --img_path PATH/TO/IMAGE
+e.g.,
+python test.py --img_path demo_imgs/ILSVRC2012_val_00040251.JPEG
 ```
 
-Tested on Ubuntu 16.04 + Nvidia 1080Ti + Cuda 8.0 + cudnn 7.0
+or colorize the images in a folder by:
+```
+python test.py --img_path PATH/TO/FOLDER
+e.g., 
+python test.py --img_path demo_imgs/
+```
+The results are saved in test_result/
+
+### Video colorization without optical flow
+Step1. the video should be split to frames first:
+```
+python video_utils.py --video2frames  --video_dir demo.mkv --out_frames_dir demo_framesdir
+```
+
+Step2. Colorizing blanc-and-white frames (you can also use the image colorization pretrained model to colorize the frames):
+```
+python test_div_video.py --use_gpu 1 --video_path demo_framesdir 
+```
+Results are saved in video_path_colorized, e.g., demo_framesdir_colorized
+
+Step3. Convert colorized frames to video, note that you need to check the fps of original video
+```
+python video_utils.py --frames2video --colorized_video_dir demo_colorized.mp4 --colorized_frames_dir demo_framesdir_colorized --fps 24
+```
+
+Step4. Add the sound of original video (again, you need to make sure the fps of colorized vide is consistent with the original video)
+```
+python video_utils.py --add_sound --colorized_video_dir demo_colorized.mp4 --video_dir demo.mkv
+```
+
 
 
 ## Training
 
 ```
-python main.py --model YOUR_MODEL_NAME --data_dir data
+python main_whole.py --model YOUR_MODEL_NAME --data_dir data
 ```
 
 ### Prepare the dataset
